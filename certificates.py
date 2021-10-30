@@ -7,6 +7,9 @@ from docx import Document
 from docx.enum.table import WD_ALIGN_VERTICAL
 from docx.shared import Cm, Inches, Pt, RGBColor
 from docx2pdf import convert
+# Correct second page of nothing from Word
+import fitz
+pages_list = [0]
 
 DEBUG = False
 
@@ -19,7 +22,7 @@ ASSOCIATE_ADVISOR_CALL = None
 ASSOCIATE_ADVISOR_NAME = None
 CLASS_LEVEL = "Intermediate"
 CLASS_LIST = None
-CWA_SESSION_DATE = "Jan-Feb 2021"
+CWA_SESSION_DATE = "April - May 2021"
 OUTPUT_DIRECTORY = "output"
 V_BOTTOM = WD_ALIGN_VERTICAL.BOTTOM
 
@@ -52,6 +55,7 @@ if args.associate_advisor_call:
 
 if args.outputdir:
     OUTPUT_DIRECTORY = args.outputdir
+tmp = os.path.join(OUTPUT_DIRECTORY,"tmp.pdf")
 
 # Create output directory if it doesn't already exist
 if not os.path.exists(OUTPUT_DIRECTORY):
@@ -149,4 +153,11 @@ for i in CLASS_LIST.index:
     fn = os.path.join(OUTPUT_DIRECTORY,i+".docx")
     print("%s" % i)
     D.save(fn)
-    convert(fn, fn.replace("docx","pdf"))
+    pdf_out = fn.replace("docx","pdf")
+    convert(fn, tmp)
+    # Word seems to be appending an extra, empty page.  Just delete it 
+    # from the PDF
+    fh = fitz.open(tmp)
+    fh.select(pages_list)
+    fh.save(pdf_out)
+    fh.close()
